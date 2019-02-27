@@ -4,7 +4,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 
-typealias ObservableCallback = (args: Map<String, Any>) -> Deferred<Any?>?
+typealias ObservableCallback = (args: Map<String, Any>?) -> Deferred<Any?>?
+typealias ObservableSyncCallback = (args: Map<String, Any>?) -> Unit
 
 open class Observable {
 
@@ -34,9 +35,9 @@ open class Observable {
         return MainScope().async { deferreds.map {  it!!.await() } }
     }
 
-    fun bind(event: String, callback: (args: Map<String, Any>) -> Unit) = bindSync(event, callback)
+    fun bind(event: String, callback: ObservableSyncCallback) = bindSync(event, callback)
 
-    fun bindSync(event: String, callback: (args: Map<String, Any>) -> Unit) = addCallback(event) { args ->
+    fun bindSync(event: String, callback: ObservableSyncCallback) = addCallback(event) { args ->
         callback(args)
         return@addCallback null
     }

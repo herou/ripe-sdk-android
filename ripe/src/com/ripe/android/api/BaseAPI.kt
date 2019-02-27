@@ -2,16 +2,11 @@ package com.ripe.android.api
 
 import java.net.URL
 import java.net.URLEncoder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.async
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
 import com.ripe.android.base.Ripe
+import kotlinx.coroutines.*
 
 interface BaseAPI {
     val owner: Ripe
@@ -25,6 +20,30 @@ interface BaseAPI {
         priceOptions = this.build(priceOptions)
         val url = priceOptions["url"] as String
         return this.cacheURLAsync(url, priceOptions)
+    }
+
+    fun getFramesAsync(): Deferred<Map<String, Int>> {
+        if (this.owner.options["frames"] != null) {
+            @Suppress("unchecked_cast")
+            val frames = this.owner.options as Map<String, Int>
+            return CompletableDeferred(frames)
+        }
+
+        val self = this
+        @Suppress("experimental_api_usage")
+        return MainScope().async {
+            val config = self.owner.loadedConfig ?: self.owner.api.getConfigAsync().await()
+            val frames = HashMap<String, Int>()
+            @Suppress("unchecked_cast")
+            val faces = config!!["faces"] as List<String>
+            for (face in faces) {
+                frames[face] = 1
+            }
+
+            val sideFrames = config["frames"] as Int
+            frames["side"] = sideFrames
+            return@async frames
+        }
     }
 
     fun cacheURLAsync(url: String, options: Map<String, Any>): Deferred<Map<String, Any>?> {

@@ -76,7 +76,8 @@ class SimpleTest {
 
     suspend fun waitForEvent(instance: Observable, event: String) = suspendCoroutine<Any> {
         continuation -> instance.bind(event) {
-            result -> if(continuation.context.isActive) continuation.resume(result)
+            val result = it as Any
+            if(continuation.context.isActive) continuation.resume(result)
         }
     }
 
